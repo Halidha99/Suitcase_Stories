@@ -5,3 +5,4 @@ import React from 'react'
     <div>Home</div>
   )
 }
+export default Home

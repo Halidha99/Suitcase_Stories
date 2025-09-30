@@ -9,7 +9,13 @@ export default {
       display: ["Poppins", "sans-serif"],
     },
     
-    extend: {},
+    extend: {
+      // colors used in the project 
+      colors: {
+        primary: "#05B6D3",
+        secoundary:"#EF863E",
+      },
+    },
   },
   plugins: [],
 }

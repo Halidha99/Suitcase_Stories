@@ -7,7 +7,10 @@ const bcrypt = require("bcrypt");
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+
 const User = require("./models/user.model");
+
+const Travelstory = require("./models/travelStory.model");
 const { authenticateToken } = require("./utilities");
 
 mongoose.connect(config.connectionString);
@@ -109,6 +112,53 @@ app.get("/get-user", authenticateToken, async (req, res) => {
     message: "",
   });
 });
+
+// Add Travel Story
+app.post("/add-travel-story", authenticateToken, async (req, res) => {
+  const { title, story, visitedLocation, imageUrl, visitedDate } = req.body;
+
+  const { userId } = req.user;
+
+  // validate  required field
+if (!title || !story || !visitedLocation || !imageUrl || !visitedDate) {
+  return res.status(400).json({ error: true, message: "All input are required" });
+}
+  // Convert visitedDate from milliseconds to Date Object
+  const pasteVisitedDate = new Date(parseInt(visitedDate));
+
+  try {
+    const travelStory = new Travelstory({
+      title,
+      story,
+      visitedLocation,
+      imageUrl,
+      visitedDate: pasteVisitedDate,
+      userId,
+    });
+
+    await travelStory.save();
+    return res.status(201).json({
+      story: travelStory, message: 'Travel Story added successfully'
+    });
+  } catch (error) {
+    res.status(400).json({ error: true, message: error.message });
+  }
+
+  });
+
+//  Get All Travel Stories 
+app.get("/get-all-stories", authenticateToken, async (req, res) => {
+  const { userId } = req.user;
+  try {
+    const travelStories = await Travelstory.find({
+      userId: userId
+    }).sort({ isFavourite: -1, });
+    res.status(200).json({ stories: travelStories });
+  } catch (error) {
+    res.status(400).json({ error: true, message: error.message });
+  }
+});
+
 
 // Start server
 app.listen(8000);

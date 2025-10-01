@@ -18,12 +18,6 @@ const app = express();
 app.use(express.json());
 app.use(cors({ origin: "*" }));
 
-// Test API
-// app.get("/hello", async (req, res) => {
-//   return res.status(200).json({ message: "hello" });
-// });
-
-
 // create user acount
 app.post("/create-account", async (req, res) => {
   // create API
@@ -54,7 +48,7 @@ app.post("/create-account", async (req, res) => {
     { userId: user.id },
     process.env.ACCESS_TOKEN_SECRET,
     {
-      expiresIn: "24h",
+      expiresIn: "72h",
     }
   );
 
@@ -64,6 +58,38 @@ app.post("/create-account", async (req, res) => {
     accessToken,
     message: "Registration successfull",
 
+  });
+});
+
+// login
+app.post("/login", async (req, res) => {
+ const{email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: "All input required" });
+
+  }
+  const user = await User.findOne({ email});
+  if (!user) {
+    return res.status(400).json({ message: "User not found" });
+  }
+
+  const isPasswordValid = await bcrypt.compare(password, user.password);
+  if (!isPasswordValid) {
+    return res.status(400).json({ message: "Invalid credentials" });
+  }
+  const accessToken = jwt.sign(
+    { userId: user.id },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: "72h",
+    }
+  );
+  return res.json({
+    error: false,
+    message: "Login successful",
+    user: { fullName:user.fullName, email: user.email },
+    accessToken,
   });
 });
 // Start server

@@ -10,6 +10,8 @@ const jwt = require("jsonwebtoken");
 const User = require("./models/user.model");
 
 mongoose.connect(config.connectionString);
+
+
 const app = express();
 
 // Middleware
@@ -23,10 +25,48 @@ app.use(cors({ origin: "*" }));
 
 
 // create user acount
-app.get("/create-account", async (req, res) => {
-  
+app.post("/create-account", async (req, res) => {
+  // create API
+  const { fullName, email, password } = req.body;
+  if (!fullName || !email || !password) {
+    return res.status(200)
+      .json({ error: true, message: "All input is required" });
+  }
+
+  const isUser = await User.findOne({ email });
+  if (isUser) {
+    return res
+      .status(400)
+      .json({ error: true, message: "User already exists" });
+  }
+
+  const encryptedPassword = await bcrypt.hash(password, 10);
+
+  const user = new User({
+    fullName,
+    email,
+    password: encryptedPassword,
+  });
+
+  await user.save();
+
+  const accessToken = jwt.sign(
+    { userId: user.id },
+    process.env.ACCESS_TOKEN_SECRET,
+    {
+      expiresIn: "24h",
+    }
+  );
+
+  return res.status(201).json({
+    error: false,
+    user: { fullName: user.fullName, email: user.email },
+    accessToken,
+    message: "Registration successfull",
+
+  });
 });
 // Start server
 app.listen(8000);
  
-module.exports = app;
+  module.exports = app;

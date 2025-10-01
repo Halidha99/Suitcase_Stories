@@ -7,6 +7,7 @@ const bcrypt = require("bcrypt");
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+const User = require("./models/user.model");
 
 mongoose.connect(config.connectionString);
 const app = express();
@@ -16,10 +17,15 @@ app.use(express.json());
 app.use(cors({ origin: "*" }));
 
 // Test API
-app.get("/hello", async (req, res) => {
-  return res.status(200).json({ message: "hello" });
-});
+// app.get("/hello", async (req, res) => {
+//   return res.status(200).json({ message: "hello" });
+// });
 
+
+// create user acount
+app.get("/create-account", async (req, res) => {
+  
+});
 // Start server
 app.listen(8000);
  

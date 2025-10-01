@@ -8,6 +8,7 @@ const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const User = require("./models/user.model");
+const { authenticateToken } = require("./utilities");
 
 mongoose.connect(config.connectionString);
 
@@ -63,13 +64,13 @@ app.post("/create-account", async (req, res) => {
 
 // login
 app.post("/login", async (req, res) => {
- const{email, password } = req.body;
+  const { email, password } = req.body;
 
   if (!email || !password) {
     return res.status(400).json({ message: "All input required" });
 
   }
-  const user = await User.findOne({ email});
+  const user = await User.findOne({ email });
   if (!user) {
     return res.status(400).json({ message: "User not found" });
   }
@@ -88,10 +89,27 @@ app.post("/login", async (req, res) => {
   return res.json({
     error: false,
     message: "Login successful",
-    user: { fullName:user.fullName, email: user.email },
+    user: { fullName: user.fullName, email: user.email },
     accessToken,
   });
+  
 });
+
+// Get User
+app.get("/get-user", authenticateToken, async (req, res) => {
+  const userId = req.user.userId; // Fixed destructuring
+
+  const isUser = await User.findOne({ _id: userId });
+
+  if (!isUser) {
+    return res.sendStatus(401);
+  }
+  return res.json({
+    user: isUser,
+    message: "",
+  });
+});
+
 // Start server
 app.listen(8000);
  

@@ -1,12 +1,22 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+const jwt = require('jsonwebtoken');
 
-const userSchema = new Schema({
-    fullName: { type: String, required: true },
-    email: { type: String, required: true, unique: true },
-    password: { type: String, required: true },
-    createdOn: { type: String, default: Date.now },
+function authenticateToken(req, res, next) {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
 
-});
+    // No token , aunthorized
+    if (!token) return res.sendStatus(401);
 
-module.exports = mongoose.model("User", userSchema);
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, user) => {
+        // Token not valid
+        if (err) return res.sendStatus(401);
+        req.user = user;
+        next();
+    });
+        
+}
+    
+module.exports = {
+        authenticateToken,
+    }
+

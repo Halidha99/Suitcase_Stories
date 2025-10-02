@@ -8,6 +8,11 @@ const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 
+const upload = require("./multer");
+const fs = require("fs");
+const path = require("path");
+
+
 const User = require("./models/user.model");
 
 const Travelstory = require("./models/travelStory.model");
@@ -159,8 +164,20 @@ app.get("/get-all-stories", authenticateToken, async (req, res) => {
   }
 });
 
+// Route to handle image upload
+app.post("/image-upload", upload.single("image"), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: true, message: "No image uploaded" });
+    }
+    const imageUrl = `http://localhost:8000/uploads/${req.file.filename}`; 
+    res.status(201).json({ imageUrl });
+  } catch (error) {
+    res.status(400).json({ error: true, message: error.message });
+  }
+});
 
-// Start server
+  // Start server
 app.listen(8000);
  
   module.exports = app;

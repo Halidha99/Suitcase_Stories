@@ -151,6 +151,44 @@ if (!title || !story || !visitedLocation || !imageUrl || !visitedDate) {
 
   });
 
+  // EditTravel Story
+app.post("/edit-travel-story/:id", authenticateToken, async (req, res) => {
+  const { id } = req.params;
+
+  const { title, story, visitedLocation, imageUrl, visitedDate } = req.body;
+  const { userId } = req.user;
+
+  // validate  required field
+  if (!title || !story || !visitedLocation || !imageUrl || !visitedDate) {
+    return res.status(400).json({ error: true, message: "All input are required" });
+  }
+  // Convert visitedDate from milliseconds to Date Object
+  const pasteVisitedDate = new Date(parseInt(visitedDate));
+
+  try {
+    // find the travel story by ID and ensure it belongs to the authenticated user
+    
+    const travelStory = await Travelstory.findOne({ _id: id, userId: userId });
+    if (!travelStory) {
+      return res.status(400).json({ error: true, message: "Travel story not found" });
+      
+    }
+    const logoImgUrl = `http://localhost:8000/assets/logo.png`;
+
+    travelStory.title = title;
+    travelStory.story = story;
+    travelStory.visitedLocation = visitedLocation;
+    travelStory.imageUrl = imageUrl || logoImgUrl;
+    travelStory.visitedDate = pasteVisitedDate;
+
+    await travelStory.save();
+    res.status(200).json({ story: travelStory, message: "Updated Successfully" });
+  } catch (error) {
+    res.status(400).json({ error: true, message: error.message });
+  }
+
+});
+
 //  Get All Travel Stories 
 app.get("/get-all-stories", authenticateToken, async (req, res) => {
   const { userId } = req.user;
@@ -177,7 +215,45 @@ app.post("/image-upload", upload.single("image"), async (req, res) => {
   }
 });
 
-  // Start server
+// delete image from upload folder
+app.delete("/delete-image", async (req, res) => {
+  const { imageUrl } = req.query;
+
+  if (!imageUrl) {
+    return res.status(400).json({ error: true, message: "imageUrl parameter is required" })
+  }
+
+  // Extract the filename from the imageUrl
+  try {
+    const filename = path.basename(imageUrl);
+
+    // Define the file path
+    const filePath = path.join(__dirname, 'uploads', filename);
+
+    // Check if the file exists
+
+    if (fs.existsSync(filePath)) {
+      //  Delete the file from the upload folder
+
+      fs.unlinkSync(filePath);
+      res.status(200).json({ message: "Image deleted successfully" });
+    } else {
+      res.status(200).json({ error: true, message: "Image not found" });
+
+    }
+  } catch (error) {
+    res.status(500).json({ error: true, message: error.message });
+    }
+});
+
+// Serve static files from the upload and assets directory
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+app.use("/assets", express.static(path.join(__dirname, "assets")));
+
+  
+  
+
+// Start server
 app.listen(8000);
  
   module.exports = app;

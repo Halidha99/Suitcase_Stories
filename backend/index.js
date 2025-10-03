@@ -308,7 +308,7 @@ app.put("/update-is-favourite/:id", authenticateToken, async (req, res) => {
      
 });
 
-// Search travel stories
+
 // Search travel stories
 app.get("/search-travel-stories", authenticateToken, async (req, res) => {
   const { query } = req.query;
@@ -343,8 +343,26 @@ app.get("/search-travel-stories", authenticateToken, async (req, res) => {
   }
 });
 
+// Filter travel stories by date
 
+app.get("/travel-stories/filter", authenticateToken, async (req, res) => {
+  const { startDate, endDate } = req.query;
+  const { userId } = req.user;
 
+  try {
+    const startdate = new Date(parseInt(startDate));
+    const enddate = new Date(parseInt(endDate));
+
+    const filteredStories = await travelStories.find({
+      userId: userId,
+      visitedDate: { $gte: startdate, $lte: enddate },
+    }).sort({ isFavourite: -1 });
+
+    res.status(200).json({ stories: filteredStories });
+  } catch (error) {
+    res.status(500).json({ error: true, message: error.message });
+  }
+});
 
   // Serve static files from the upload and assets directory
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));

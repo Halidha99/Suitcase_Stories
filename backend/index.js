@@ -309,9 +309,40 @@ app.put("/update-is-favourite/:id", authenticateToken, async (req, res) => {
 });
 
 // Search travel stories
-app.post("/search-travel-stories", authenticateToken, async (req, res) => {
+// Search travel stories
+app.get("/search-travel-stories", authenticateToken, async (req, res) => {
+  const { query } = req.query;
+
+  const { userId } = req.user;
   
-})
+  if (!query) {
+    return res.status(400).json({ error: true, message: "query is required" });
+  }
+
+  try {
+   const searchStories = await Travelstory.find({
+  userId: userId,
+  $or: [
+    { title: { $regex: query, $options: "i" } },
+    { story: { $regex: query, $options: "i" } },
+    {
+      $expr: {
+        $regexMatch: {
+          input: { $dateToString: { format: "%Y-%m-%d", date: "$visitedDate" } },
+          regex: query,
+          options: "i"
+        }
+      }
+    }
+  ],
+}).sort({ isFavourite: -1 });
+
+    res.status(200).json({ stories: searchStories });
+  } catch (error) {
+    res.status(500).json({ error: true, message: error.message });
+  }
+});
+
 
 
 
